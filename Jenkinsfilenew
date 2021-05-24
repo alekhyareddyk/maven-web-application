@@ -1,0 +1,54 @@
+pipeline{
+agent any
+tools {
+maven 'maven3.8.1'
+}
+triggers{
+    pollSCM('* * * * *')
+}
+options{
+   buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5'))
+   timestamps()
+}
+stages{
+stage('checkoutcode'){
+steps{
+    git branch: 'development', credentialsId: '86038a28-671c-4d35-ba0c-6d8f4498e784', url: 'https://github.com/alekhyareddyk/maven-web-application.git'
+}
+}
+stage('build'){
+steps{
+    sh "mvn clean package"
+}
+}
+stage('execute sonarqube report'){
+    steps{
+        sh "mvn sonar:sonar"
+    }
+}
+stage('upload artifact into nexus'){
+    steps{
+        sh "mvn deploy"
+    }
+}
+stage('deploy app into tomcat'){
+    steps{
+         sshagent(['3c45726a-6b45-4084-9657-ba1cf48050ef']) {
+    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@13.126.182.193:/opt/apache-tomcat-9.0.45/webapps/"
+    }
+}
+}
+}
+post{
+    success{
+        emailext body: '''build over... Declarativeway -success
+regards,
+alekhyareddy''', subject: 'build over... Declarativeway -success', to: 'alekhya.kondreddy@gmail.com'
+    }
+    failure{
+    emailext body: '''build over... Declarativeway -failed
+regards,
+alekhyareddy''', subject: 'build over... Declarativeway -failed', to: 'alekhya.kondreddy@gmail.com'    
+    }
+}
+}
