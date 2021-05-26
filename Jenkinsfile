@@ -1,4 +1,4 @@
-node {
+node ('wallmart-node') {
     properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '5', numToKeepStr: '5')), pipelineTriggers([pollSCM('* * * * *')])])
     def mavenhome = tool name: "maven3.8.1"
     stage('checkout code')
@@ -20,7 +20,7 @@ node {
     stage('deploy app into tomcat servevr')
     {
         sshagent(['3c45726a-6b45-4084-9657-ba1cf48050ef']) {
-    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@3.108.44.112:/opt/apache-tomcat-9.0.45/webapps/"
+    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@52.66.198.14:/opt/apache-tomcat-9.0.45/webapps/"
 }
     }
     stage('send email notification')
